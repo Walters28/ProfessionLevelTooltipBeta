@@ -21,7 +21,7 @@ function GameTooltip:SetWidth(value) self.width = value end
 function GameTooltip:GetItem() return nil, self.itemLink end
 
 local tooltipCallbacks = {}
-Enum = { TooltipDataType = { Object = 1, Unit = 2, Item = 3 } }
+Enum = { TooltipDataType = { Object = 1, Unit = 2, Item = 3, Spell = 4 } }
 TooltipDataProcessor = {
     AddTooltipPostCall = function(kind, callback)
         tooltipCallbacks[kind] = callback
@@ -115,12 +115,23 @@ assert(show("School of Deviate Fish") == "School of Deviate Fish")
 assert(show("Fishing Bobber", nil, nil, "Object") == "Fishing Bobber")
 assert(show("Pool of Acid", nil, nil, "Object") == "Pool of Acid")
 assert(show("School of Magic", nil, nil, "Unit") == "School of Magic")
-assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire")
+assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire (80/150)")
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltipTextLeft1.text == "Basic Campfire (80/150)")
+assert(show("Basic Campfire", nil, "item:123", "Item") == "Basic Campfire")
+assert(show("Basic Campfire", nil, nil, "Spell") == "Basic Campfire")
+assert(show("Basic Campfire", nil, nil, "Unit") == "Basic Campfire")
+assert(show("Basic Campfire") == "Basic Campfire")
+assert(show("Cooking Fire", nil, nil, "Object") == "Cooking Fire")
 assert(show("Chest", nil, nil, "Object") == "Chest")
 
 skillInfo[4] = nil
 assert(show("School of Deviate Fish", nil, nil, "Object") == "School of Deviate Fish")
 skillInfo[4] = { "Fishing", 90, 150 }
+
+skillInfo[5] = nil
+assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire")
+skillInfo[5] = { "Cooking", 80, 150 }
 
 local getItem = GameTooltip.GetItem
 GameTooltip.GetItem = nil
@@ -131,14 +142,19 @@ local oldProfessions, oldCount, oldSkill = GetProfessions, GetNumSkillLines, Get
 GetProfessions, GetNumSkillLines, GetSkillLineInfo = nil, nil, nil
 assert(show("Copper Vein") == "Copper Vein")
 assert(show("School of Deviate Fish", nil, nil, "Object") == "School of Deviate Fish")
+assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire")
 
 C_SkillInfo = {
-    GetNumSkillLines = function() return 1 end,
-    GetSkillLineInfo = function()
-        return { name = "Mining", isHeader = false, rank = 88, maxRank = 150 }
+    GetNumSkillLines = function() return 2 end,
+    GetSkillLineInfo = function(index)
+        if index == 1 then
+            return { name = "Mining", isHeader = false, rank = 88, maxRank = 150 }
+        end
+        return { name = "Cooking", isHeader = false, rank = 60, maxRank = 150 }
     end,
 }
 assert(show("Iron Deposit") == "Iron Deposit (88/150)")
+assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire (60/150)")
 C_SkillInfo = nil
 GetProfessions, GetNumSkillLines, GetSkillLineInfo = oldProfessions, oldCount, oldSkill
 

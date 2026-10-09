@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: FridayNightProfessions by Walters
-## Notes: Shows gathering skills on herbs, ore, skinnable units, and fishing schools
-## Version: 1.1.0
+## Notes: Shows gathering skills and Cooking on Basic Campfire tooltips
+## Version: 1.1.1
 
 ProfessionLevelTooltipBeta.lua

@@ -49,7 +49,7 @@ local function professionLevels()
             local name, _, rank, maxRank = GetProfessionInfo(index)
             if usable(name) and usable(rank) and usable(maxRank)
                 and (name == "Herbalism" or name == "Mining" or name == "Skinning"
-                    or name == "Fishing")
+                    or name == "Fishing" or name == "Cooking")
                 and type(rank) == "number" and type(maxRank) == "number" then
                 levels[name] = rank .. "/" .. maxRank
             end
@@ -70,7 +70,7 @@ local function professionLevels()
         end
         if usable(name) and usable(isHeader) and usable(rank) and usable(maxRank)
             and not isHeader and (name == "Herbalism" or name == "Mining"
-                or name == "Skinning" or name == "Fishing")
+                or name == "Skinning" or name == "Fishing" or name == "Cooking")
             and type(rank) == "number" and type(maxRank) == "number" and not levels[name] then
             levels[name] = rank .. "/" .. maxRank
         end
@@ -128,10 +128,12 @@ local function gatheringTitleWithoutRequirement(shownTooltip, levels)
         profession = "Mining"
     elseif objectTooltip and levels.Fishing and fishingSchoolTitle(original) then
         profession = "Fishing"
+    elseif objectTooltip and levels.Cooking and original == "Basic Campfire" then
+        profession = "Cooking"
     end
     if not profession then return end
-    -- Gathered items can have the same title as world nodes. Never add a
-    -- gathering overlay to bag, merchant or auction item tooltips.
+    -- Items can have the same title as world objects. Never add a skill
+    -- overlay to bag, merchant or auction item tooltips.
     if type(shownTooltip.GetItem) ~= "function" then return end
     local ok, _, link = pcall(shownTooltip.GetItem, shownTooltip)
     if not ok or (link ~= nil and (not usable(link) or link)) then return end
@@ -202,6 +204,7 @@ SlashCmdList.PROFESSIONLEVELTOOLTIPBETA = function()
         .. ", Mining " .. tostring(levels.Mining or "not found")
         .. ", Skinning " .. tostring(levels.Skinning or "not found")
         .. ", Fishing " .. tostring(levels.Fishing or "not found")
+        .. ", Cooking " .. tostring(levels.Cooking or "not found")
         .. "; last update error: " .. tostring(lastError or "none"))
 end
 
@@ -230,6 +233,10 @@ events:SetScript("OnEvent", function(_, event, name)
             end
             if Enum.TooltipDataType.Item then
                 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item,
+                    function(shownTooltip) onTooltip(shownTooltip, false) end)
+            end
+            if Enum.TooltipDataType.Spell then
+                TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell,
                     function(shownTooltip) onTooltip(shownTooltip, false) end)
             end
         end
