@@ -3,6 +3,8 @@ local editedLines = setmetatable({}, { __mode = "k" })
 local blockedTooltip = false
 local lastError
 local objectTooltip = false
+local addedSkillLine, addedSkillText
+local updatingTooltip = false
 
 -- Standard herb world-object names. A gatherable plant can show only its
 -- name, with no visible "Herbalism" requirement line to annotate.
@@ -90,10 +92,6 @@ local function professionForLine(text, levels)
         (text:find("Skinning", 1, true) or text:find("Skinnable", 1, true)) then
         return "Skinning"
     end
-    if objectTooltip and levels.Fishing
-        and (text == "Fishing" or text:find("Requires Fishing", 1, true)) then
-        return "Fishing"
-    end
 end
 
 local function updateLine(line, levels, forcedProfession)
@@ -126,10 +124,6 @@ local function gatheringTitleWithoutRequirement(shownTooltip, levels)
         profession = "Herbalism"
     elseif miningNodes[original] and levels.Mining then
         profession = "Mining"
-    elseif objectTooltip and levels.Fishing and fishingSchoolTitle(original) then
-        profession = "Fishing"
-    elseif objectTooltip and levels.Cooking and original == "Basic Campfire" then
-        profession = "Cooking"
     end
     if not profession then return end
     -- Items can have the same title as world objects. Never add a skill
@@ -143,6 +137,76 @@ local function gatheringTitleWithoutRequirement(shownTooltip, levels)
         if usable(lineText) and professionForLine(lineText, levels) == profession then return end
     end
     return title, profession
+end
+
+local function clearAddedSkillLine()
+    if addedSkillLine and usable(addedSkillLine:GetText())
+        and addedSkillLine:GetText() == addedSkillText then
+        if addedSkillText == "" then return false end
+        addedSkillLine:SetText("")
+        addedSkillText = ""
+        return true
+    end
+    addedSkillLine, addedSkillText = nil, nil
+    return false
+end
+
+local function updateLabeledSkillLine(shownTooltip, levels)
+    local title = shownTooltip == tooltip and _G.GameTooltipTextLeft1
+    local text = title and title:GetText()
+    if not objectTooltip or not usable(text) or type(shownTooltip.GetItem) ~= "function" then
+        if clearAddedSkillLine() then shownTooltip:Show() end
+        return
+    end
+    local ok, _, link = pcall(shownTooltip.GetItem, shownTooltip)
+    if not ok or (link ~= nil and (not usable(link) or link)) then
+        if clearAddedSkillLine() then shownTooltip:Show() end
+        return
+    end
+
+    -- A previous build placed the number on the title itself. Normalize only
+    -- known world-object titles before using a separate skill line.
+    local oldTitle = text:match("^(.-) %(%d+/%d+%)$")
+    if oldTitle and (oldTitle == "Basic Campfire" or fishingSchoolTitle(oldTitle)) then
+        title:SetText(oldTitle)
+        text = oldTitle
+    end
+
+    local profession
+    if text == "Basic Campfire" and levels.Cooking then
+        profession = "Cooking"
+    elseif fishingSchoolTitle(text) and levels.Fishing then
+        profession = "Fishing"
+    end
+    if not profession then
+        if clearAddedSkillLine() then shownTooltip:Show() end
+        return
+    end
+
+    local label = profession .. ": " .. levels[profession]
+    local changed = false
+    local lineIsCurrent = false
+    for index = 2, shownTooltip:NumLines() do
+        if _G["GameTooltipTextLeft" .. index] == addedSkillLine then
+            lineIsCurrent = true
+            break
+        end
+    end
+    if not lineIsCurrent then addedSkillLine, addedSkillText = nil, nil end
+    if addedSkillLine and usable(addedSkillLine:GetText())
+        and addedSkillLine:GetText() == addedSkillText then
+        if addedSkillText ~= label then
+            addedSkillLine:SetText(label)
+            changed = true
+        end
+    else
+        shownTooltip:AddLine(label, 1, 1, 1)
+        addedSkillLine = _G["GameTooltipTextLeft" .. shownTooltip:NumLines()]
+        changed = true
+    end
+    addedSkillText = label
+    if changed then shownTooltip:Show() end
+    return addedSkillLine and addedSkillLine:GetStringWidth()
 end
 
 local function updateTooltip(shownTooltip)
@@ -164,14 +228,17 @@ local function updateTooltip(shownTooltip)
     for _, region in ipairs({ shownTooltip:GetRegions() }) do
         professionWidth = math.max(professionWidth, updateLine(region, levels) or 0)
     end
+    professionWidth = math.max(professionWidth, updateLabeledSkillLine(shownTooltip, levels) or 0)
     if professionWidth > 0 and shownTooltip:GetWidth() < professionWidth + 24 then
         shownTooltip:SetWidth(professionWidth + 24)
     end
 end
 
 local function safeUpdate(shownTooltip)
-    if blockedTooltip then return end
+    if blockedTooltip or updatingTooltip then return end
+    updatingTooltip = true
     local ok, err = pcall(updateTooltip, shownTooltip)
+    updatingTooltip = false
     if not ok then
         blockedTooltip = true
         lastError = tostring(err)
@@ -183,6 +250,8 @@ tooltip:HookScript("OnShow", function(shownTooltip)
     safeUpdate(shownTooltip)
 end)
 tooltip:HookScript("OnHide", function()
+    clearAddedSkillLine()
+    addedSkillLine, addedSkillText = nil, nil
     blockedTooltip = false
     objectTooltip = false
 end)

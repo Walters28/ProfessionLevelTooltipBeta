@@ -11,13 +11,23 @@ local function line(text)
     }
 end
 
-GameTooltip = { scripts = {}, width = 100, itemLink = nil, lines = {} }
+GameTooltip = { scripts = {}, width = 100, height = 20, itemLink = nil, lines = {} }
 function GameTooltip:HookScript(event, handler) self.scripts[event] = handler end
 function GameTooltip:IsShown() return true end
 function GameTooltip:NumLines() return #self.lines end
 function GameTooltip:GetRegions() return table.unpack(self.lines) end
 function GameTooltip:GetWidth() return self.width end
 function GameTooltip:SetWidth(value) self.width = value end
+function GameTooltip:GetHeight() return self.height end
+function GameTooltip:AddLine(text)
+    local index = #self.lines + 1
+    self.lines[index] = line(text)
+    _G["GameTooltipTextLeft" .. index] = self.lines[index]
+end
+function GameTooltip:Show()
+    self.height = 8 + #self.lines * 14
+    if self.secureShowHook then self.secureShowHook(self) end
+end
 function GameTooltip:GetItem() return nil, self.itemLink end
 
 local tooltipCallbacks = {}
@@ -32,11 +42,13 @@ local function show(title, second, itemLink, kind)
     GameTooltip.scripts.OnHide(GameTooltip)
     GameTooltip.lines = { line(title) }
     if second then GameTooltip.lines[2] = line(second) end
+    GameTooltip.height = 8 + #GameTooltip.lines * 14
     GameTooltipTextLeft1, GameTooltipTextLeft2 = GameTooltip.lines[1], GameTooltip.lines[2]
     GameTooltip.itemLink = itemLink
     GameTooltip.scripts.OnShow(GameTooltip)
     if kind then tooltipCallbacks[Enum.TooltipDataType[kind]](GameTooltip) end
-    return GameTooltip.lines[1].text, GameTooltip.lines[2] and GameTooltip.lines[2].text
+    return GameTooltip.lines[1].text, GameTooltip.lines[2] and GameTooltip.lines[2].text,
+        GameTooltip.lines[3] and GameTooltip.lines[3].text
 end
 
 local skillInfo = {
@@ -55,7 +67,10 @@ GetSkillLineInfo = function(index)
     if index == 1 then return "Professions", true end
     return "Mining", false, nil, 75, nil, nil, 150
 end
-hooksecurefunc = function() end
+hooksecurefunc = function(frame, method, handler)
+    assert(method == "Show")
+    frame.secureShowHook = handler
+end
 SlashCmdList = {}
 local eventHandler
 CreateFrame = function()
@@ -99,26 +114,66 @@ skillInfo[3] = nil
 title, second = show("Boar", "Skinnable", nil, "Unit")
 assert(title == "Boar" and second == "Skinnable (150/225)")
 
-title, second = show("School of Deviate Fish", nil, nil, "Object")
-assert(title == "School of Deviate Fish (90/150)" and not second)
+local third
+title, second, third = show("School of Deviate Fish", nil, nil, "Object")
+assert(title == "School of Deviate Fish" and second == "Fishing: 90/150" and not third)
+assert(GameTooltip:NumLines() == 2 and GameTooltip:GetHeight() > 22)
+assert(GameTooltip:GetWidth() >= GameTooltipTextLeft2:GetStringWidth() + 24)
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
-assert(GameTooltipTextLeft1.text == "School of Deviate Fish (90/150)")
-assert(show("Oily Blackmouth School", nil, nil, "Object") ==
-    "Oily Blackmouth School (90/150)")
-assert(show("Pool of Fish", nil, nil, "Object") == "Pool of Fish (90/150)")
-title, second = show("School of Deviate Fish", "Requires Fishing (50)", nil, "Object")
-assert(title == "School of Deviate Fish" and second == "Requires Fishing (50) (90/150)")
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Fishing: 90/150")
+skillInfo[4] = { "Fishing", 91, 150 }
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Fishing: 91/150")
+skillInfo[4] = { "Fishing", 90, 150 }
+title, second = show("Oily Blackmouth School", nil, nil, "Object")
+assert(title == "Oily Blackmouth School" and second == "Fishing: 90/150")
+title, second = show("Pool of Fish", nil, nil, "Object")
+assert(title == "Pool of Fish" and second == "Fishing: 90/150")
+title, second, third = show("School of Deviate Fish", "Requires Fishing (50)", nil, "Object")
+assert(title == "School of Deviate Fish" and second == "Requires Fishing (50)"
+    and third == "Fishing: 90/150" and GameTooltip:NumLines() == 3)
+title, second = show("School of Deviate Fish (90/150)", nil, nil, "Object")
+assert(title == "School of Deviate Fish" and second == "Fishing: 90/150")
 assert(show("School of Deviate Fish", nil, "item:999", "Item") == "School of Deviate Fish")
+assert(GameTooltip:NumLines() == 1)
 title, second = show("Fishing Rod", "Requires Fishing (50)", "item:999", "Item")
 assert(title == "Fishing Rod" and second == "Requires Fishing (50)")
 assert(show("School of Deviate Fish") == "School of Deviate Fish")
 assert(show("Fishing Bobber", nil, nil, "Object") == "Fishing Bobber")
 assert(show("Pool of Acid", nil, nil, "Object") == "Pool of Acid")
 assert(show("School of Magic", nil, nil, "Unit") == "School of Magic")
-assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire (80/150)")
+title, second, third = show("Basic Campfire", nil, nil, "Object")
+assert(title == "Basic Campfire" and second == "Cooking: 80/150" and not third)
+assert(GameTooltip:NumLines() == 2 and GameTooltip:GetHeight() > 22)
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
-assert(GameTooltipTextLeft1.text == "Basic Campfire (80/150)")
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 80/150")
+skillInfo[5] = { "Cooking", 81, 150 }
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 81/150")
+skillInfo[5] = { "Cooking", 80, 150 }
+
+-- Reuse one visible tooltip without an OnHide event between object types.
+GameTooltipTextLeft1:SetText("School of Deviate Fish")
+tooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Fishing: 90/150")
+GameTooltipTextLeft1:SetText("Basic Campfire")
+tooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 80/150")
+skillInfo[5] = nil
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "")
+skillInfo[5] = { "Cooking", 80, 150 }
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 80/150")
+GameTooltipTextLeft1:SetText("Fishing Rod")
+GameTooltip.itemLink = "item:999"
+tooltipCallbacks[Enum.TooltipDataType.Item](GameTooltip)
+assert(GameTooltipTextLeft2.text == "")
+
+title, second = show("Basic Campfire (80/150)", nil, nil, "Object")
+assert(title == "Basic Campfire" and second == "Cooking: 80/150")
 assert(show("Basic Campfire", nil, "item:123", "Item") == "Basic Campfire")
+assert(GameTooltip:NumLines() == 1)
 assert(show("Basic Campfire", nil, nil, "Spell") == "Basic Campfire")
 assert(show("Basic Campfire", nil, nil, "Unit") == "Basic Campfire")
 assert(show("Basic Campfire") == "Basic Campfire")
@@ -154,7 +209,8 @@ C_SkillInfo = {
     end,
 }
 assert(show("Iron Deposit") == "Iron Deposit (88/150)")
-assert(show("Basic Campfire", nil, nil, "Object") == "Basic Campfire (60/150)")
+title, second = show("Basic Campfire", nil, nil, "Object")
+assert(title == "Basic Campfire" and second == "Cooking: 60/150")
 C_SkillInfo = nil
 GetProfessions, GetNumSkillLines, GetSkillLineInfo = oldProfessions, oldCount, oldSkill
 
