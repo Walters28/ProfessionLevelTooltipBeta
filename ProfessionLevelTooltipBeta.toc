@@ -1,0 +1,6 @@
+## Interface: 16001
+## Title: Profession Level Tooltip Beta
+## Notes: Shows your Herbalism and Skinning levels in the standard tooltip
+## Version: 1.0.8
+
+ProfessionLevelTooltipBeta.lua

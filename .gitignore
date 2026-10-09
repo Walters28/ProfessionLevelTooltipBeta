@@ -1,0 +1,21 @@
+# Local dependencies and tool output
+node_modules/
+npm-debug.log*
+coverage/
+*.log
+
+# WoW user and installation data
+WTF/
+SavedVariables/
+Screenshots/
+Cache/
+Logs/
+
+# Local secrets and editor files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+*.bak
+*.tmp
