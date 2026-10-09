@@ -1,4 +1,4 @@
-# FridayNightProfessions by Walters
+# Friday Night Professions by Walters
 
 A World of Warcraft Forever Beta addon that shows your current and maximum profession skill in the standard tooltip. It annotates Herbalism, Mining, and Skinning lines and recognized English herb and ore world-node titles without requirement lines. Recognized Fishing schools and pools show a separate `Fishing: current/max` line, and the exact English `Basic Campfire` world object shows a separate `Cooking: current/max` line. Their object titles stay unchanged, and the added lines use the current title font, color, and shadow. Item tooltips are excluded from the title fallback.
 
@@ -17,7 +17,7 @@ To install, copy the `ProfessionLevelTooltipBeta` folder containing the `.toc` a
 
 ## Testing
 
-With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari mocks for herb and ore nodes, requirement lines, skinnable units, Fishing schools and pools, Basic Campfire, unrelated objects, item and spell exclusions, unlearned skills, missing APIs, skill changes, hover reuse, repeated updates, multiline sizing, and font/color inheritance and restoration. Live screenshots confirmed the separate Fishing and Cooking lines in the previous build; this style update still needs in-game verification before release.
+With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari mocks for herb and ore nodes, requirement lines, skinnable units, Fishing schools and pools, Basic Campfire, unrelated objects, item and spell exclusions, unlearned skills, missing APIs, skill changes, hover reuse, repeated updates, multiline sizing, and font/color inheritance and restoration. Fishing and Cooking have been confirmed in game with the current styling. Mining is covered by mocks but still needs a live hover check.
 
 Herb and ore title fallbacks use fixed lists of standard English node names. Fishing and Cooking title recognition need the client's world-object tooltip callback. Other locales and custom node names may need additional support.
 
@@ -33,4 +33,4 @@ Herb and ore title fallbacks use fixed lists of standard English node names. Fis
 
 ## Source and release status
 
-This repository is prepared from the local development copy used for the installed Classic Beta addon. No third-party artwork or library code is included in the addon itself. A license has not yet been chosen, so no license is granted by this repository until one is added.
+This repository contains the local development copy used for the installed Classic Beta addon. No third-party library code is included in the runtime addon. A license has not yet been chosen, so no license is granted by this repository until one is added.

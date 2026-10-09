@@ -1,6 +1,6 @@
 ## Interface: 16001
-## Title: FridayNightProfessions by Walters
-## Notes: Shows gathering skills and Cooking on Basic Campfire tooltips
+## Title: Friday Night Professions by Walters
+## Notes: Herbalism, Mining, Skinning, Fishing schools, and Basic Campfire Cooking
 ## Version: 1.1.3
 
 ProfessionLevelTooltipBeta.lua
