@@ -1,6 +1,6 @@
 ## Interface: 16001
-## Title: Profession Level Tooltip Beta
-## Notes: Shows your Herbalism and Skinning levels in the standard tooltip
-## Version: 1.0.8
+## Title: FridayNightProfessions by Walters
+## Notes: Shows gathering skills on herbs, ore, skinnable units, and fishing schools
+## Version: 1.1.0
 
 ProfessionLevelTooltipBeta.lua

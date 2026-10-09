@@ -1,8 +1,8 @@
 {
   "name": "profession-level-tooltip-beta",
   "private": true,
-  "version": "1.0.8",
-  "description": "Mock tests for the WoW Classic Beta Profession Level Tooltip addon",
+  "version": "1.1.0",
+  "description": "Mock tests for FridayNightProfessions by Walters",
   "scripts": {
     "test": "node tests/run_mock.js"
   },

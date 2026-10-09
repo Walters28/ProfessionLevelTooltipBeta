@@ -1,23 +1,25 @@
-# Profession Level Tooltip Beta
+# FridayNightProfessions by Walters
 
-A small World of Warcraft Classic Beta addon that appends your current and maximum Herbalism or Skinning skill to matching lines in the standard game tooltip. It also adds the Herbalism value to the title of recognized English herb world nodes when the tooltip has no Herbalism requirement line. Herb items in bags, shops, or auctions are excluded from that title fallback.
+A World of Warcraft Forever Beta addon that shows your current and maximum gathering skill in the standard tooltip. It annotates Herbalism, Mining, and Skinning requirement lines; recognized English herb and ore world-node titles without requirement lines; and recognized Fishing school or pool titles when the client identifies the tooltip as a world object. Item tooltips are excluded from the node-title fallback.
 
-The `/plt` command prints the detected Herbalism and Skinning values and the last tooltip update error, if any.
+Fishing support applies only to hovered schools or pools. It does not change open-water casting, fishing bobbers, or catch chances. The displayed value is your own skill, not a required level for the target. Cooking and campfire tooltips are not included until a live campfire tooltip can be checked.
+
+The existing `/plt` command prints the four detected skill values and the last tooltip update error, if any.
 
 ## Current build
 
 - Addon folder and identifier: `ProfessionLevelTooltipBeta`
-- Version: `1.0.8`
+- Version: `1.1.0`
 - TOC interface: `16001`
-- Tested installation: `_classic_beta_` on October 7, 2026
+- Target client: `_classic_beta_` (WoW Forever Beta)
 
 To install, copy the `ProfessionLevelTooltipBeta` folder containing the `.toc` and `.lua` files into the relevant WoW client's `Interface/AddOns` directory, then load or reload the game. The `tests` directory, `package.json`, and this README are development files and are not needed in the installed addon folder.
 
 ## Testing
 
-With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari to mock tooltips for herb nodes, herb items, Herbalism requirement lines, skinnable units, unrelated objects, and repeated updates. These mocks cannot confirm the exact tooltip layout of every live game object; verify in game as well.
+With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari mocks for herb and ore nodes, requirement lines, skinnable units, Fishing schools and pools, unrelated objects, item exclusions, unlearned skills, missing APIs, and repeated updates. These mocks do not confirm the exact tooltip layout of live game objects; verify in game before release.
 
-The title fallback uses a fixed list of standard English herb names. Other locales and custom herb names may need additional support.
+Herb and ore title fallbacks use fixed lists of standard English node names. Fishing school and pool recognition needs the client's world-object tooltip callback. Other locales and custom node names may need additional support.
 
 ## Source and release status
 
