@@ -3,7 +3,7 @@ local editedLines = setmetatable({}, { __mode = "k" })
 local blockedTooltip = false
 local lastError
 local objectTooltip = false
-local addedSkillLine, addedSkillText
+local addedSkillLine, addedSkillText, addedSkillOriginalStyle
 local updatingTooltip = false
 
 -- Standard herb world-object names. A gatherable plant can show only its
@@ -41,6 +41,72 @@ end
 
 local function usable(value)
     return value ~= nil and (not issecretvalue or not issecretvalue(value))
+end
+
+local function readFontStyle(line)
+    local style = {}
+    if type(line.GetFont) == "function" then
+        local ok, face, size, flags = pcall(line.GetFont, line)
+        if ok and usable(face) and usable(size) and (flags == nil or usable(flags)) then
+            style.font = { face, size, flags }
+        end
+    end
+    if type(line.GetTextColor) == "function" then
+        local ok, red, green, blue, alpha = pcall(line.GetTextColor, line)
+        if ok and usable(red) and usable(green) and usable(blue)
+            and (alpha == nil or usable(alpha)) then
+            style.color = { red, green, blue, alpha }
+        end
+    end
+    if type(line.GetShadowColor) == "function" then
+        local ok, red, green, blue, alpha = pcall(line.GetShadowColor, line)
+        if ok and usable(red) and usable(green) and usable(blue)
+            and (alpha == nil or usable(alpha)) then
+            style.shadowColor = { red, green, blue, alpha }
+        end
+    end
+    if type(line.GetShadowOffset) == "function" then
+        local ok, x, y = pcall(line.GetShadowOffset, line)
+        if ok and usable(x) and usable(y) then style.shadowOffset = { x, y } end
+    end
+    return style
+end
+
+local function sameStyleValues(first, second, count)
+    if not first or not second then return false end
+    for index = 1, count do
+        if first[index] ~= second[index] then return false end
+    end
+    return true
+end
+
+local function applyFontStyle(line, style)
+    if not style then return false end
+    local current = readFontStyle(line)
+    local changed = false
+    if style.font and type(line.SetFont) == "function"
+        and not sameStyleValues(style.font, current.font, 3) then
+        local ok, result = pcall(line.SetFont, line,
+            style.font[1], style.font[2], style.font[3])
+        changed = (ok and result ~= false) or changed
+    end
+    if style.color and type(line.SetTextColor) == "function"
+        and not sameStyleValues(style.color, current.color, 4) then
+        changed = pcall(line.SetTextColor, line,
+            style.color[1], style.color[2], style.color[3], style.color[4]) or changed
+    end
+    if style.shadowColor and type(line.SetShadowColor) == "function"
+        and not sameStyleValues(style.shadowColor, current.shadowColor, 4) then
+        changed = pcall(line.SetShadowColor, line,
+            style.shadowColor[1], style.shadowColor[2],
+            style.shadowColor[3], style.shadowColor[4]) or changed
+    end
+    if style.shadowOffset and type(line.SetShadowOffset) == "function"
+        and not sameStyleValues(style.shadowOffset, current.shadowOffset, 2) then
+        changed = pcall(line.SetShadowOffset, line,
+            style.shadowOffset[1], style.shadowOffset[2]) or changed
+    end
+    return changed
 end
 
 local function professionLevels()
@@ -142,12 +208,13 @@ end
 local function clearAddedSkillLine()
     if addedSkillLine and usable(addedSkillLine:GetText())
         and addedSkillLine:GetText() == addedSkillText then
-        if addedSkillText == "" then return false end
-        addedSkillLine:SetText("")
+        local changed = addedSkillText ~= ""
+        if changed then addedSkillLine:SetText("") end
+        changed = applyFontStyle(addedSkillLine, addedSkillOriginalStyle) or changed
         addedSkillText = ""
-        return true
+        return changed
     end
-    addedSkillLine, addedSkillText = nil, nil
+    addedSkillLine, addedSkillText, addedSkillOriginalStyle = nil, nil, nil
     return false
 end
 
@@ -192,7 +259,9 @@ local function updateLabeledSkillLine(shownTooltip, levels)
             break
         end
     end
-    if not lineIsCurrent then addedSkillLine, addedSkillText = nil, nil end
+    if not lineIsCurrent then
+        addedSkillLine, addedSkillText, addedSkillOriginalStyle = nil, nil, nil
+    end
     if addedSkillLine and usable(addedSkillLine:GetText())
         and addedSkillLine:GetText() == addedSkillText then
         if addedSkillText ~= label then
@@ -202,9 +271,13 @@ local function updateLabeledSkillLine(shownTooltip, levels)
     else
         shownTooltip:AddLine(label, 1, 1, 1)
         addedSkillLine = _G["GameTooltipTextLeft" .. shownTooltip:NumLines()]
+        if addedSkillLine then addedSkillOriginalStyle = readFontStyle(addedSkillLine) end
         changed = true
     end
     addedSkillText = label
+    if addedSkillLine then
+        changed = applyFontStyle(addedSkillLine, readFontStyle(title)) or changed
+    end
     if changed then shownTooltip:Show() end
     return addedSkillLine and addedSkillLine:GetStringWidth()
 end
@@ -251,7 +324,7 @@ tooltip:HookScript("OnShow", function(shownTooltip)
 end)
 tooltip:HookScript("OnHide", function()
     clearAddedSkillLine()
-    addedSkillLine, addedSkillText = nil, nil
+    addedSkillLine, addedSkillText, addedSkillOriginalStyle = nil, nil, nil
     blockedTooltip = false
     objectTooltip = false
 end)

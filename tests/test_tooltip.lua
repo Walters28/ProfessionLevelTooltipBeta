@@ -1,13 +1,41 @@
-local function line(text)
+local function line(text, isTitle)
     return {
         text = text,
+        fontFace = isTitle and "Title.ttf" or "Body.ttf",
+        fontSize = isTitle and 16 or 12,
+        fontFlags = isTitle and "OUTLINE" or "",
+        red = isTitle and 1 or 1,
+        green = isTitle and 0.82 or 1,
+        blue = isTitle and 0.25 or 1,
+        alpha = 1,
+        shadowRed = 0,
+        shadowGreen = 0,
+        shadowBlue = 0,
+        shadowAlpha = isTitle and 0.8 or 0,
+        shadowX = isTitle and 1 or 0,
+        shadowY = isTitle and -1 or 0,
         GetObjectType = function() return "FontString" end,
         IsVisible = function() return true end,
         GetText = function(self) return self.text end,
         SetText = function(self, value) self.text = value end,
-        GetTextColor = function() return 1, 1, 1, 1 end,
-        SetTextColor = function() end,
-        GetStringWidth = function(self) return #self.text * 6 end,
+        GetFont = function(self) return self.fontFace, self.fontSize, self.fontFlags end,
+        SetFont = function(self, face, size, flags)
+            self.fontFace, self.fontSize, self.fontFlags = face, size, flags
+        end,
+        GetTextColor = function(self) return self.red, self.green, self.blue, self.alpha end,
+        SetTextColor = function(self, red, green, blue, alpha)
+            self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
+        end,
+        GetShadowColor = function(self)
+            return self.shadowRed, self.shadowGreen, self.shadowBlue, self.shadowAlpha
+        end,
+        SetShadowColor = function(self, red, green, blue, alpha)
+            self.shadowRed, self.shadowGreen, self.shadowBlue, self.shadowAlpha =
+                red, green, blue, alpha
+        end,
+        GetShadowOffset = function(self) return self.shadowX, self.shadowY end,
+        SetShadowOffset = function(self, x, y) self.shadowX, self.shadowY = x, y end,
+        GetStringWidth = function(self) return #self.text * self.fontSize / 2 end,
     }
 end
 
@@ -40,7 +68,7 @@ TooltipDataProcessor = {
 
 local function show(title, second, itemLink, kind)
     GameTooltip.scripts.OnHide(GameTooltip)
-    GameTooltip.lines = { line(title) }
+    GameTooltip.lines = { line(title, true) }
     if second then GameTooltip.lines[2] = line(second) end
     GameTooltip.height = 8 + #GameTooltip.lines * 14
     GameTooltipTextLeft1, GameTooltipTextLeft2 = GameTooltip.lines[1], GameTooltip.lines[2]
@@ -49,6 +77,29 @@ local function show(title, second, itemLink, kind)
     if kind then tooltipCallbacks[Enum.TooltipDataType[kind]](GameTooltip) end
     return GameTooltip.lines[1].text, GameTooltip.lines[2] and GameTooltip.lines[2].text,
         GameTooltip.lines[3] and GameTooltip.lines[3].text
+end
+
+local function assertSameStyle(actual, expected)
+    local af, as, ax = actual:GetFont()
+    local ef, es, ex = expected:GetFont()
+    assert(af == ef and as == es and ax == ex, "font differs from title")
+    local ar, ag, ab, aa = actual:GetTextColor()
+    local er, eg, eb, ea = expected:GetTextColor()
+    assert(ar == er and ag == eg and ab == eb and aa == ea, "color differs from title")
+    local asr, asg, asb, asa = actual:GetShadowColor()
+    local esr, esg, esb, esa = expected:GetShadowColor()
+    assert(asr == esr and asg == esg and asb == esb and asa == esa,
+        "shadow color differs from title")
+    local axo, ayo = actual:GetShadowOffset()
+    local exo, eyo = expected:GetShadowOffset()
+    assert(axo == exo and ayo == eyo, "shadow offset differs from title")
+end
+
+local function assertBodyStyle(value)
+    local face, size, flags = value:GetFont()
+    local red, green, blue, alpha = value:GetTextColor()
+    assert(face == "Body.ttf" and size == 12 and flags == "")
+    assert(red == 1 and green == 1 and blue == 1 and alpha == 1)
 end
 
 local skillInfo = {
@@ -119,8 +170,14 @@ title, second, third = show("School of Deviate Fish", nil, nil, "Object")
 assert(title == "School of Deviate Fish" and second == "Fishing: 90/150" and not third)
 assert(GameTooltip:NumLines() == 2 and GameTooltip:GetHeight() > 22)
 assert(GameTooltip:GetWidth() >= GameTooltipTextLeft2:GetStringWidth() + 24)
+assertSameStyle(GameTooltipTextLeft2, GameTooltipTextLeft1)
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Fishing: 90/150")
+GameTooltipTextLeft1:SetFont("Dynamic.ttf", 20, "THICKOUTLINE")
+GameTooltipTextLeft1:SetTextColor(0.3, 0.6, 0.9, 1)
+GameTooltipTextLeft1:SetShadowOffset(2, -2)
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assertSameStyle(GameTooltipTextLeft2, GameTooltipTextLeft1)
 skillInfo[4] = { "Fishing", 91, 150 }
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Fishing: 91/150")
@@ -132,6 +189,8 @@ assert(title == "Pool of Fish" and second == "Fishing: 90/150")
 title, second, third = show("School of Deviate Fish", "Requires Fishing (50)", nil, "Object")
 assert(title == "School of Deviate Fish" and second == "Requires Fishing (50)"
     and third == "Fishing: 90/150" and GameTooltip:NumLines() == 3)
+assertBodyStyle(GameTooltipTextLeft2)
+assertSameStyle(GameTooltipTextLeft3, GameTooltipTextLeft1)
 title, second = show("School of Deviate Fish (90/150)", nil, nil, "Object")
 assert(title == "School of Deviate Fish" and second == "Fishing: 90/150")
 assert(show("School of Deviate Fish", nil, "item:999", "Item") == "School of Deviate Fish")
@@ -145,8 +204,13 @@ assert(show("School of Magic", nil, nil, "Unit") == "School of Magic")
 title, second, third = show("Basic Campfire", nil, nil, "Object")
 assert(title == "Basic Campfire" and second == "Cooking: 80/150" and not third)
 assert(GameTooltip:NumLines() == 2 and GameTooltip:GetHeight() > 22)
+assertSameStyle(GameTooltipTextLeft2, GameTooltipTextLeft1)
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 80/150")
+local getFont, getShadowColor = GameTooltipTextLeft1.GetFont, GameTooltipTextLeft1.GetShadowColor
+GameTooltipTextLeft1.GetFont, GameTooltipTextLeft1.GetShadowColor = nil, nil
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+GameTooltipTextLeft1.GetFont, GameTooltipTextLeft1.GetShadowColor = getFont, getShadowColor
 skillInfo[5] = { "Cooking", 81, 150 }
 GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltip:NumLines() == 2 and GameTooltipTextLeft2.text == "Cooking: 81/150")
@@ -169,9 +233,14 @@ GameTooltipTextLeft1:SetText("Fishing Rod")
 GameTooltip.itemLink = "item:999"
 tooltipCallbacks[Enum.TooltipDataType.Item](GameTooltip)
 assert(GameTooltipTextLeft2.text == "")
+assertBodyStyle(GameTooltipTextLeft2)
 
 title, second = show("Basic Campfire (80/150)", nil, nil, "Object")
 assert(title == "Basic Campfire" and second == "Cooking: 80/150")
+local ownedLine = GameTooltipTextLeft2
+GameTooltip.scripts.OnHide(GameTooltip)
+assert(ownedLine.text == "")
+assertBodyStyle(ownedLine)
 assert(show("Basic Campfire", nil, "item:123", "Item") == "Basic Campfire")
 assert(GameTooltip:NumLines() == 1)
 assert(show("Basic Campfire", nil, nil, "Spell") == "Basic Campfire")
