@@ -200,7 +200,22 @@ local function gatheringTitleWithoutRequirement(shownTooltip, levels)
     for index = 2, shownTooltip:NumLines() do
         local line = _G["GameTooltipTextLeft" .. index]
         local lineText = line and line:GetText()
-        if usable(lineText) and professionForLine(lineText, levels) == profession then return end
+        if usable(lineText) then
+            local lineEdit = editedLines[line]
+            local lineOriginal = lineEdit and lineText == lineEdit.edited
+                and lineEdit.original or lineText
+            if professionForLine(lineOriginal, levels) == profession then
+                -- OnShow may have added the title fallback before this line arrived.
+                -- Only undo a title edit that still matches our own text.
+                if previous and text == previous.edited then
+                    local red, green, blue, alpha = title:GetTextColor()
+                    title:SetText(previous.original)
+                    title:SetTextColor(red, green, blue, alpha)
+                    editedLines[title] = nil
+                end
+                return
+            end
+        end
     end
     return title, profession
 end

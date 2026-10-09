@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Friday Night Professions by Walters
 ## Notes: Herbalism, Mining, Skinning, Fishing schools, and Basic Campfire Cooking
-## Version: 1.1.3
+## Version: 1.1.4
 
 ProfessionLevelTooltipBeta.lua

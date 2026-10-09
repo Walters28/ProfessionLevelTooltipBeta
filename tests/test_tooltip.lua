@@ -114,9 +114,10 @@ GetProfessionInfo = function(index)
     if info then return info[1], nil, info[2], info[3] end
 end
 GetNumSkillLines = function() return 2 end
+local miningRank = 75
 GetSkillLineInfo = function(index)
     if index == 1 then return "Professions", true end
-    return "Mining", false, nil, 75, nil, nil, 150
+    return "Mining", false, nil, miningRank, nil, nil, 150
 end
 hooksecurefunc = function(frame, method, handler)
     assert(method == "Show")
@@ -140,6 +141,12 @@ GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltipTextLeft1.text == "Wild Steelbloom (120/225)")
 title, second = show("Peacebloom", "Requires Herbalism (1)")
 assert(title == "Peacebloom" and second == "Requires Herbalism (1) (120/225)")
+title, second = show("Mageroyal")
+assert(title == "Mageroyal (120/225)" and not second)
+GameTooltip:AddLine("Requires Herbalism (50)")
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltipTextLeft1.text == "Mageroyal"
+    and GameTooltipTextLeft2.text == "Requires Herbalism (50) (120/225)")
 assert(show("Wild Steelbloom", nil, "item:3355", "Item") == "Wild Steelbloom")
 
 title, second = show("Copper Vein")
@@ -148,6 +155,26 @@ GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
 assert(GameTooltipTextLeft1.text == "Copper Vein (75/150)")
 title, second = show("Iron Deposit", "Requires Mining (125)")
 assert(title == "Iron Deposit" and second == "Requires Mining (125) (75/150)")
+title, second = show("Copper Vein", "Mining")
+assert(title == "Copper Vein" and second == "Mining (75/150)")
+title, second = show("Copper Vein")
+assert(title == "Copper Vein (75/150)" and not second)
+GameTooltip:AddLine("Mining")
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltipTextLeft1.text == "Copper Vein")
+assert(GameTooltipTextLeft2.text == "Mining (75/150)" and GameTooltip:NumLines() == 2)
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltipTextLeft1.text == "Copper Vein"
+    and GameTooltipTextLeft2.text == "Mining (75/150)")
+miningRank = 76
+GameTooltip.scripts.OnUpdate(GameTooltip, 0.4)
+assert(GameTooltipTextLeft1.text == "Copper Vein"
+    and GameTooltipTextLeft2.text == "Mining (76/150)")
+GameTooltipTextLeft1:SetText("Tin Vein")
+tooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip)
+assert(GameTooltipTextLeft1.text == "Tin Vein"
+    and GameTooltipTextLeft2.text == "Mining (76/150)")
+miningRank = 75
 title, second = show("Rock Elemental", "Mineable", nil, "Unit")
 assert(title == "Rock Elemental" and second == "Mineable (75/150)")
 assert(show("Copper Vein", nil, "item:2770", "Item") == "Copper Vein")

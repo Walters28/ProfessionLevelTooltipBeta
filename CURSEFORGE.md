@@ -12,7 +12,12 @@ Fishing schools and recognized pools show a separate `Fishing: current/max` line
 
 This beta build targets WoW Forever Beta (`Interface: 16001`). Fishing support requires the client's world-object tooltip callback and does not change open-water casting, bobbers, or catch chances. Cooking support applies to `Basic Campfire` only. The displayed skill is your character's skill, not the skill required by an object. Other locales and custom resource names may need support.
 
-Fishing and Cooking were confirmed in game with the current styling. Mining has automated mock coverage but still needs a live hover check.
+Fishing and Cooking were confirmed in game with the current styling. A Copper Vein Mining tooltip was confirmed in game; the 1.1.4 duplicate display fix still needs a live check after reload.
+
+## 1.1.4 changelog
+
+- Keep the node title unchanged when its Mining or Herbalism line arrives after the title fallback.
+- Prevent the title value from returning on repeated updates.
 
 ## 1.1.3 changelog
 

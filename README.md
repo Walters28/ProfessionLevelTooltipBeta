@@ -9,7 +9,7 @@ The existing `/plt` command prints the five detected skill values and the last t
 ## Current build
 
 - Addon folder and identifier: `ProfessionLevelTooltipBeta`
-- Version: `1.1.3`
+- Version: `1.1.4`
 - TOC interface: `16001`
 - Target client: `_classic_beta_` (WoW Forever Beta)
 
@@ -17,11 +17,16 @@ To install, copy the `ProfessionLevelTooltipBeta` folder containing the `.toc` a
 
 ## Testing
 
-With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari mocks for herb and ore nodes, requirement lines, skinnable units, Fishing schools and pools, Basic Campfire, unrelated objects, item and spell exclusions, unlearned skills, missing APIs, skill changes, hover reuse, repeated updates, multiline sizing, and font/color inheritance and restoration. Fishing and Cooking have been confirmed in game with the current styling. Mining is covered by mocks but still needs a live hover check.
+With Node.js and npm installed, run `npm install` followed by `npm test`. The test uses Fengari mocks for herb and ore nodes, requirement lines, skinnable units, Fishing schools and pools, Basic Campfire, unrelated objects, item and spell exclusions, unlearned skills, missing APIs, skill changes, hover reuse, repeated updates, multiline sizing, and font/color inheritance and restoration. A Copper Vein Mining tooltip has been confirmed in game; the 1.1.4 duplicate display fix still needs a live check after reload.
 
 Herb and ore title fallbacks use fixed lists of standard English node names. Fishing and Cooking title recognition need the client's world-object tooltip callback. Other locales and custom node names may need additional support.
 
 ## Changelog
+
+### 1.1.4
+
+- Keep the ore or herb node title unchanged when its profession line arrives after the title fallback.
+- Recognize already annotated profession lines on repeated updates, so the title value is not added again.
 
 ### 1.1.3
 
